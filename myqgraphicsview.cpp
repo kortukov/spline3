@@ -68,7 +68,7 @@ MyPoint::MyPoint(qreal x, qreal y, qreal width, qreal height, QGraphicsItem *par
 {
     setPos(x, y);
     derivative = 0;
-    setBrush(Qt::blue);
+    setBrush(Qt::green);
 }
 void MyPoint::setDerivative(qreal number)
 {
