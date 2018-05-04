@@ -27,7 +27,6 @@ QPointF polynom(MyPoint* point1, MyPoint* point2, qreal t)
     return h1(t)*first + h3(t)*point1->getDerivative() + h2(t)*second + h4(t)*point2->getDerivative();
 }
 
-
 void MyQGraphicsView::drawSpline()
 {
     if (pointlist.size() > 1){
@@ -38,7 +37,7 @@ void MyQGraphicsView::drawSpline()
         }
         QPointF bufpoint1(pointlist.first()->x(),pointlist.first()->y()), bufpoint2;
         for (int i = 0; i < pointlist.size() - 1; ++i){//цикл по парам точек
-            for(qreal t = 0; t < 1; t += 0.02){//цикл внутр
+            for(qreal t = 0; t < 1; t += 0.02){//строим сплайн на каждом отрезке
                 bufpoint2 = polynom(pointlist.at(i), pointlist.at(i+1), t);
                 QGraphicsLineItem* line = scene->addLine(bufpoint1.x(), bufpoint1.y(), bufpoint2.x(), bufpoint2.y());
                 linelist.append(line);
@@ -63,18 +62,26 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent *event)
 {//эта функция отвечает за добавление точек
     double rad = 1;
     pt = mapToScene(event->pos());
-    QGraphicsItem *item = itemAt(event->pos());
-    if (!item){
-        MyPoint *point = new MyPoint(pt.x(), pt.y(), rad*8.0, rad*8.0);
+    if (!itemAt(event->pos())){
+        MyPoint *point = new MyPoint(pt.x(), pt.y(), rad*12.0, rad*12.0);
         pointlist.append(point);
         lastpoint = point;
         scene->addItem(point);
     }
     else {
         for (int i = 0; i < pointlist.size(); ++i){
-            if (pointlist.at(i)->pos() == pt)
+            QPointF distance(pointlist.at(i)->pos() - pt);
+            if (distance.x()*distance.x() + distance.y()*distance.y() < 144){
                 lastpoint = pointlist.at(i);
+                if (event->button() == Qt::RightButton){
+                    scene->removeItem(pointlist.at(i));
+                    delete pointlist.takeAt(i);
+                    drawSpline();
+                    return;
+                }
+            }
         }
+
     }
     arrow = scene->addLine(pt.x() + rad , pt.y() + rad, pt.x() , pt.y()); //отрисовываем касательную
 }
@@ -92,7 +99,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent *event)
         else{
             QPointF derivative;
             if (currentpt.x() - pt.x() == 0) derivative = QPointF(0,1);
-            else derivative = QPointF(currentpt.y() - pt.y(), currentpt.x() - pt.x());
+            else derivative = QPointF(currentpt.x() - pt.x(), currentpt.y() - pt.y());
             lastpoint->setDerivative(derivative);
         }
      }
@@ -110,7 +117,7 @@ void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *event)
 
 
 MyPoint::MyPoint(qreal x, qreal y, qreal width, qreal height, QGraphicsItem *parent) :
-    QGraphicsEllipseItem(0,0,width, height, parent)
+    QGraphicsEllipseItem(-5,-5,width, height, parent)
 {
     setPos(x, y);
     derivative = QPointF(0,0);
